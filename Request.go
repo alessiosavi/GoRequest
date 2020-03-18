@@ -3,6 +3,7 @@ package request
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/base64"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -140,4 +141,17 @@ func GetBody(resp *http.Response) (string, error) {
 		return "", nil
 	}
 	return sb.String(), nil
+}
+
+func (r *Request) SetBasicAuth(username, password string) {
+	r.AddHeader("Authorization", "Basic "+basicAuth(username, password))
+}
+
+func (r *Request) SetBearerAuth(token string) {
+	r.AddHeader("Authorization", "Bearer "+token)
+}
+
+func basicAuth(username, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }

@@ -5,23 +5,26 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 )
 
+// Test that a cookie is saved for consecutive request
 func Test_Cookie(t *testing.T) {
 
 	// create a listener with the desired port.
-	var l net.Listener
-	var err error
-	var url string
-	var resp *http.Response
-	var body string
-	var first = "First Call!"
-	var second = "Second Call!"
+	var (
+		resp   *http.Response
+		URL    = "127.0.0.1:8082"
+		first  = "First Call!"
+		second = "Second Call!"
+		body   string
+		err    error
+		l      net.Listener
+	)
 
-	url = "127.0.0.1:8082"
-	if l, err = net.Listen("tcp", url); err != nil {
+	if l, err = net.Listen("tcp", URL); err != nil {
 		panic(err)
 	}
 
@@ -47,7 +50,7 @@ func Test_Cookie(t *testing.T) {
 	ts.Start()
 	time.Sleep(10 * time.Millisecond)
 
-	r := InitRequest("http://" + url)
+	r := InitRequest("http://" + URL)
 	if resp, err = r.Post("", ""); err != nil {
 		t.Error(err)
 	}
@@ -68,6 +71,13 @@ func Test_Cookie(t *testing.T) {
 		t.Errorf("Expected: %s | Found: %s", second, body)
 	}
 
+	var _url *url.URL
+	if _url, err = url.Parse("http://" + URL); err != nil {
+		panic(err)
+	}
+	t.Logf("Cookies: %+v", r.cookies)
+	t.Logf("Cookies: %+v", r.cookieJar)
+	t.Logf("Cookies: %+v", client.Jar.Cookies(_url))
 	ts.CloseClientConnections()
 	ts.Close()
 
