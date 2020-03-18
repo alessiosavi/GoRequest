@@ -14,7 +14,7 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-var client http.Client
+var Client http.Client
 var err error
 
 type Request struct {
@@ -23,7 +23,7 @@ type Request struct {
 	headers   http.Header
 	cookieJar http.CookieJar
 	cookies   []*http.Cookie
-	req       http.Request
+	req       *http.Request
 }
 
 // InitRequest is delegated to initialize a new empty request
@@ -34,14 +34,14 @@ func InitRequest(u string) *Request {
 	}
 	jar := initCookieJar()
 	InitClient(false, false, false, 0)
-	client.Jar = jar
+	Client.Jar = jar
 	return &Request{
 		url:       URL,
 		timeout:   time.Duration(0),
 		headers:   http.Header{},
 		cookieJar: jar,
 		cookies:   nil,
-		req:       http.Request{},
+		req:       &http.Request{},
 	}
 }
 
@@ -74,7 +74,7 @@ func (r *Request) AddCookie(cookie *http.Cookie) {
 }
 
 func (r *Request) SetClient(c http.Client) {
-	client = c
+	Client = c
 	c.Jar = r.cookieJar
 }
 
@@ -111,7 +111,7 @@ func InitClient(disableKeepAlive, disableCompression, skipTls bool, timeout time
 		ForceAttemptHTTP2:      false,
 	}
 
-	client = http.Client{
+	Client = http.Client{
 		Transport:     t,
 		CheckRedirect: nil,
 		Jar:           nil,
@@ -126,7 +126,16 @@ func (r *Request) Post(contentType, body string) (*http.Response, error) {
 	if contentType == "" {
 		contentType = "text/html; charset=UTF-8"
 	}
-	if resp, err = client.Post(r.url.String(), contentType, bytes.NewBufferString(body)); err != nil {
+	if r.req, err = http.NewRequest("POST", r.url.String(), bytes.NewBufferString(body)); err != nil {
+		return nil, err
+	}
+
+	r.req.Header = r.headers
+	for i := range r.cookies {
+		r.req.AddCookie(r.cookies[i])
+	}
+
+	if resp, err = Client.Do(r.req); err != nil {
 		return nil, err
 	}
 	return resp, nil
@@ -146,7 +155,17 @@ func (r *Request) Get(params map[string]string) (*http.Response, error) {
 		}
 		r.url.RawQuery = q.Encode()
 	}
-	if resp, err = client.Get(r.url.String()); err != nil {
+
+	if r.req, err = http.NewRequest("GET", r.url.String(), nil); err != nil {
+		return nil, err
+	}
+
+	r.req.Header = r.headers
+	for i := range r.cookies {
+		r.req.AddCookie(r.cookies[i])
+	}
+
+	if resp, err = Client.Do(r.req); err != nil {
 		return nil, err
 	}
 	return resp, nil

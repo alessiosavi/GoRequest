@@ -77,7 +77,7 @@ func Test_Cookie(t *testing.T) {
 	}
 	t.Logf("Cookies: %+v", r.cookies)
 	t.Logf("Cookies: %+v", r.cookieJar)
-	t.Logf("Cookies: %+v", client.Jar.Cookies(_url))
+	t.Logf("Cookies: %+v", Client.Jar.Cookies(_url))
 	ts.CloseClientConnections()
 	ts.Close()
 
