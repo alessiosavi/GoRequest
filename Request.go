@@ -132,6 +132,26 @@ func (r *Request) Post(contentType, body string) (*http.Response, error) {
 	return resp, nil
 }
 
+func (r *Request) Get(params map[string]string) (*http.Response, error) {
+	var err error
+	var resp *http.Response
+	var q url.Values
+
+	if params != nil {
+		if q, err = url.ParseQuery(r.url.RawQuery); err != nil {
+			return nil, err
+		}
+		for key := range params {
+			q.Add(key, params[key])
+		}
+		r.url.RawQuery = q.Encode()
+	}
+	if resp, err = client.Get(r.url.String()); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 // GetBody is delegated to retrieve the body from the given response
 func GetBody(resp *http.Response) (string, error) {
 	var sb strings.Builder
