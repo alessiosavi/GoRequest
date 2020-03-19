@@ -130,14 +130,32 @@ func (r *Request) Post(contentType, body string) (*http.Response, error) {
 		return nil, err
 	}
 
-	r.req.Header = r.headers
-	for i := range r.cookies {
-		r.req.AddCookie(r.cookies[i])
-	}
+	//for a := range r.headers {
+	//	for _, b := range r.headers[a] {
+	//		r.req.Header.Add(a, b)
+	//	}
+	//}
+	//
+	//for _, c := range r.cookies {
+	//	r.req.AddCookie(c)
+	//}
 
 	if resp, err = Client.Do(r.req); err != nil {
 		return nil, err
 	}
+
+	//fmt.Printf("Headers = %+v\n", resp.Header)
+	//
+	//for a := range resp.Header {
+	//	for _, b := range resp.Header[a] {
+	//		r.headers.Add(a, b)
+	//	}
+	//}
+	//
+	//fmt.Printf("Cookies = %+v\n", resp.Cookies())
+	//for _, c := range resp.Cookies() {
+	//	r.cookies = append(r.cookies, c)
+	//}
 	return resp, nil
 }
 
@@ -160,7 +178,12 @@ func (r *Request) Get(params map[string]string) (*http.Response, error) {
 		return nil, err
 	}
 
-	r.req.Header = r.headers
+	for a := range r.headers {
+		for _, b := range r.headers[a] {
+			r.req.Header.Add(a, b)
+		}
+	}
+
 	for i := range r.cookies {
 		r.req.AddCookie(r.cookies[i])
 	}
@@ -172,11 +195,11 @@ func (r *Request) Get(params map[string]string) (*http.Response, error) {
 }
 
 // GetBody is delegated to retrieve the body from the given response
-func GetBody(resp *http.Response) (string, error) {
+func GetBody(body io.ReadCloser) (string, error) {
 	var sb strings.Builder
 
-	defer resp.Body.Close()
-	if _, err = io.Copy(&sb, resp.Body); err != nil {
+	defer body.Close()
+	if _, err = io.Copy(&sb, body); err != nil {
 		return "", nil
 	}
 	return sb.String(), nil
